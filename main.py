@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 import csv
+from os import getcwd
+
 
 """
     declaration des fonctions de recuperation de données
@@ -86,7 +88,8 @@ soup = BeautifulSoup(page.content, 'html.parser')
 
 book_table = get_book_page_table(soup)
 
-result_filename = "resultat.csv"
+current_directory = getcwd()
+result_filename = current_directory + "\\resultat.csv"
 fileObj = Path(result_filename)
 
 en_tete = ["product_page_url",
