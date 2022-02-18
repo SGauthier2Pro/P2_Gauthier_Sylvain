@@ -81,8 +81,10 @@ def get_book_availability(page_content):
         availability_number += str(number)
     return availability_number
 
+# partie main du programme
 
-url = sys.argv[1]
+
+url = sys.argv[1]  # recuperation de l'url passé en argument dans le terminal
 page = requests.get(url)
 soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -102,6 +104,8 @@ en_tete = ["product_page_url",
            "category",
            "review_rating",
            "image_url"]
+
+# verifiation de l'existance du fichier si false je le crée et ajoute les en-tetes de colone
 
 if not fileObj.exists():
     with open(result_filename, 'w', newline='') as csv_file:
