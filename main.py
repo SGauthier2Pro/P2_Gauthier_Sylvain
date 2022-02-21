@@ -223,11 +223,15 @@ def get_choice_menu_UI():
 
 def test_url(url):
     # Test de la reponse de l'url
-    reponse_get_request = requests.get(url)
-    if reponse_get_request.status_code == 200:
-        url_to_test = url
+    if "https://" in url:
+        reponse_get_request = requests.get(url)
+        if reponse_get_request.status_code == 200:
+            url_to_test = url
+        else:
+            print("erreur sur l'url : " + str(reponse_get_request))
+            sys.exit()
     else:
-        print("erreur sur l'url : " + str(reponse_get_request))
+        print("erreur sur l'url : " + url)
         sys.exit()
     return url_to_test
 
@@ -247,19 +251,31 @@ url_entry = ""
 if len(sys.argv) > 1 and str(sys.argv[1]) == "livre":
 
     # Partie livre
-    url_OK = test_url(sys.argv[2])
+    if len(sys.argv) == 3:
+        url_OK = test_url(sys.argv[2])
+    else:
+        url_OK = ""
+
     execution_mode = "1"
 
 elif len(sys.argv) > 1 and str(sys.argv[1]) == "categorie":
 
     # Partie categorie
-    url_OK = test_url(sys.argv[2])
+    if len(sys.argv) == 3:
+        url_OK = test_url(sys.argv[2])
+    else:
+        url_OK = ""
+
     execution_mode = "2"
 
 elif len(sys.argv) > 1 and str(sys.argv[1]) == "complet":
 
     # Partie site complet
-    url_OK = test_url(sys.argv[2])
+    if len(sys.argv) == 3:
+        url_OK = test_url(sys.argv[2])
+    else:
+        url_OK = ""
+
     execution_mode = "3"
 
 else:
