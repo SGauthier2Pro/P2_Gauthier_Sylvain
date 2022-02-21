@@ -39,7 +39,7 @@ def get_image_url(page_content):
     # Fonction de recuperation de l'url de l'image d'un livre
     image_tag = page_content.find("img")
     image_short_url = image_tag["src"]
-    image_url = image_short_url.replace("../..", "http://books.toscrape.com")
+    image_url = image_short_url.replace("../..", "https://books.toscrape.com")
     return image_url
 
 
@@ -81,14 +81,40 @@ def get_book_availability(page_content):
         availability_number += str(number)
     return availability_number
 
+
+def get_categories_link_list(page_content):
+    # Fonction de recuperation de la liste des liens de chaque categorie
+    categories_link_list = []
+    ul_nav_list = page_content.find_all("ul", class_="nav nav-list")
+    lis_categories = ul_nav_list.find_all("li")
+    for li in lis_categories:
+        a_balise = li.find("a")
+        link = a_balise["href"]
+        categories_link_list.append("https://books.toscrape.com" + link)
+    return categories_link_list
+
+
+def get_data_book(url_link, page_content):
+    # Fonction de recuperation des information sur un livre
+    book_table = get_book_page_table(page_content)
+    book_data_list = [url_link, book_table["UPC"],
+                     get_book_title(page_content),
+                     book_table["Price (incl. tax)"],
+                     book_table["Price (excl. tax)"],
+                     get_book_availability(page_content),
+                     get_book_description(page_content),
+                     get_book_category(page_content),
+                     get_book_review_rating(page_content),
+                     get_image_url(page_content)]
+    return book_data_list
+
+
 # partie main du programme
 
 
 url = sys.argv[1]  # recuperation de l'url passé en argument dans le terminal
 page = requests.get(url)
 soup = BeautifulSoup(page.content, 'html.parser')
-
-book_table = get_book_page_table(soup)
 
 current_directory = getcwd()
 result_filename = current_directory + "\\resultat.csv"
@@ -112,16 +138,9 @@ if not fileObj.exists():
         writer = csv.writer(csv_file, delimiter=';')
         writer.writerow(en_tete)
 
+# si le fichier resultat.csv existe j'ajjoute la ligne d'information pour un livre
 if fileObj.exists():
-    line_to_write = [url, book_table["UPC"],
-                     get_book_title(soup),
-                     book_table["Price (incl. tax)"],
-                     book_table["Price (excl. tax)"],
-                     get_book_availability(soup),
-                     get_book_description(soup),
-                     get_book_category(soup),
-                     get_book_review_rating(soup),
-                     get_image_url(soup)]
+    line_to_write = get_data_book(url, soup)
     
     with open(result_filename, 'a', newline='') as csv_file:
         writer = csv.writer(csv_file, delimiter=';')
