@@ -91,9 +91,9 @@ def get_category_link(url_link, category_name):
     lis_categories = ul_nav_list[0].find_all("li")
     for li in lis_categories:
         a_label = li.find("a")
-        if re.sub("\n|\s","",a_label.string) == category_name:
-            link = a_label["href"]
-            category_link = link.replace("../", "https://books.toscrape.com/")
+        if re.sub("\\n|\\s", "", a_label.string) == category_name:
+            c_link = a_label["href"]
+            category_link = c_link.replace("../", "https://books.toscrape.com/")
     return category_link
 
 
@@ -108,10 +108,36 @@ def get_categories_list(url_link):
     lis_categories = ul_nav_list[0].find_all("li")
     for li in lis_categories:
         a_label = li.find("a")
-        string_category = re.sub("\n|\s", "", str(a_label.string))
+        string_category = re.sub("\\n|\\s", "", str(a_label.string))
         if string_category != 'Books' and string_category != 'None':
             categories_list.append(string_category)
     return categories_list
+
+
+def get_number_of_page(url_link):
+    # Fonction pour renvoyer le nombre de page d'index en integer
+    page = requests.get(url_link)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    pager_ul = soup.find_all("ul", class_="pager")
+    pager_lis = pager_ul[0].find_all("li", class_="current")
+    string_pager = pager_lis[0].string
+    entire_number_of_page = re.sub("\\n|\\s", "", string_pager)
+    entire_number_of_page = re.sub("Page1of", "", entire_number_of_page)
+    return int(entire_number_of_page)
+
+
+def get_next_page_link(url_link):
+    # Fonction renvoyant la prochaine page du pager
+    page = requests.get(url_link)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    pager_ul = soup.find_all("ul", class_="pager")
+    pager_lis = pager_ul[0].find_all("li", class_="next")
+    href_next_page = pager_lis[0].a["href"]
+    current_page_name = url_link.split("/")[-1]
+    current_url_root_directory = re.sub(current_page_name, "", url_link)
+    link_next_page = current_url_root_directory + href_next_page
+    return link_next_page
+
 
 """
 def get_categories_link_list(url_link):
@@ -126,6 +152,7 @@ def get_categories_link_list(url_link):
     return categories_link_list
 """
 
+
 def get_book_link_in_page(url_link):
     # Fonction renvoyant la liste des url de livre d'un page
 
@@ -138,24 +165,34 @@ def get_book_link_in_page(url_link):
     for article in articles_container:
         h3_balise = article.find("h3")
         a_link = h3_balise.find("a")
-        link = a_link["href"]
-        page_book_link_list.append(link.replace("../../..", "https://books.toscrape.com/catalogue"))
+        b_link = a_link["href"]
+        page_book_link_list.append(b_link.replace("../../..", "https://books.toscrape.com/catalogue"))
     return page_book_link_list
+
 
 def get_data_book(url_link):
     # Fonction de recuperation des information sur un livre
     page = requests.get(url_link)
     book_soup_content = BeautifulSoup(page.content, 'html.parser')
+
+    # Recuperation des donnée tableau de la page du livre
     book_table = get_book_page_table(book_soup_content)
-    book_data_list = [url_link, book_table["UPC"],
-                     get_book_title(book_soup_content),
-                     book_table["Price (incl. tax)"],
-                     book_table["Price (excl. tax)"],
-                     get_book_availability(book_soup_content),
-                     get_book_description(book_soup_content),
-                     get_book_category(book_soup_content),
-                     get_book_review_rating(book_soup_content),
-                     get_image_url(book_soup_content)]
+
+    # Traitement des prix afin de supprimé la devise
+    price_without_tax = re.findall("\\d+\\.\\d+", book_table["Price (excl. tax)"])
+    price_with_tax = re.findall("\\d+\\.\\d+", book_table["Price (incl. tax)"])
+
+    # Entrée des donnée du livre dans la liste a retourné
+    book_data_list = [url_link,
+                      book_table["UPC"],
+                      get_book_title(book_soup_content),
+                      price_with_tax[0],
+                      price_without_tax[0],
+                      get_book_availability(book_soup_content),
+                      get_book_description(book_soup_content),
+                      get_book_category(book_soup_content),
+                      get_book_review_rating(book_soup_content),
+                      get_image_url(book_soup_content)]
     return book_data_list
 
 
@@ -172,10 +209,12 @@ def get_result_filename():
     result_filename_defined = current_directory + "\\" + choice_result_filename + ".csv"
     return result_filename_defined
 
+
 def fill_result_file(file_path, line_to_fill):
     # Fonction pour rajouter un ligne dans le fichier resultat
+
     # Declaration variable
-    fileObj = Path(file_path)
+    myfile = Path(file_path)
 
     en_tete = ["product_page_url",
                "universal_ product_code",
@@ -190,20 +229,19 @@ def fill_result_file(file_path, line_to_fill):
 
     # verifiation de l'existance du fichier si false je le crée et ajoute les en-tetes de colone
 
-    if not fileObj.exists():
-        with open(result_filename, 'w', newline='') as csv_file:
+    if not myfile.exists():
+        with open(result_filename, 'w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(en_tete)
 
     # si le fichier resultat.csv existe j'ajoute la ligne d'information pour un livre
-    if fileObj.exists():
-        with open(result_filename, 'a', newline='') as csv_file:
+    if myfile.exists():
+        with open(result_filename, 'a', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(line_to_fill)
 
 
-def get_choice_menu_UI():
-    execution_mode_code = ""
+def get_choice_menu_ui():
     # Menu d'execution
     print("###########################################################")
     print("#                                                         #")
@@ -218,7 +256,7 @@ def get_choice_menu_UI():
 
     # Demande d'entrée du mode voulu : livre, category, complet
     execution_mode_code = input("Entrez le chiffre du mode d'execution souhaité :")
-    return execution_mode_code
+    return str(execution_mode_code)
 
 
 def test_url(url):
@@ -280,7 +318,7 @@ elif len(sys.argv) > 1 and str(sys.argv[1]) == "complet":
 
 else:
     # Sans argument passage en mode ui menu
-    execution_mode = get_choice_menu_UI()
+    execution_mode = get_choice_menu_ui()
 
 
 # Gestion du mode d'execution du programme
@@ -289,29 +327,49 @@ else:
 if execution_mode == "1":
 
     # pour un seul livre
+
+    # declaration du fichier de resultat
     result_filename = get_result_filename()
+
     # Demande d'url si url null car provenant du menu
     if url_OK == "":
         url_entry = input("Entre l'url du livre a recuperer :")
         url_OK = test_url(url_entry)
 
+    # Recuperation des donnée du livre
     line_to_write = get_data_book(url_OK)
+
+    # Envoi des données dans le fichier de resultat
     fill_result_file(result_filename, line_to_write)
 
 elif execution_mode == "2":
 
     # pour une catégorie
+
+    # declaration du fichier de resultat
     result_filename = get_result_filename()
+
+    # Declaration de la liste des url des livre de la categorie et du nombre de page de la categorie
     list_link_in_category = []
+    page_number = 1
+
     # Demande d'url si url null car provenant du menu
     if url_OK == "":
-        url_entry = input("Entre l'url du livre a recuperer :")
+        url_entry = input("Entre l'url de la categorie a recuperer :")
         url_OK = test_url(url_entry)
 
-    list_link_in_category = get_book_link_in_page(url_OK)
-    for link in list_link_in_category:
-        line_to_write = get_data_book(link)
-        fill_result_file(result_filename, line_to_write)
+    # Recuperation du nombre de page de la catégorie
+    number_of_page = get_number_of_page(url_OK)
+
+    while page_number <= number_of_page:
+        # Recuperation des url de livre de la page
+        list_link_in_category = get_book_link_in_page(url_OK)
+        for link in list_link_in_category:
+            line_to_write = get_data_book(link)
+            fill_result_file(result_filename, line_to_write)
+        if page_number < number_of_page:
+            url_OK = get_next_page_link(url_OK)
+        page_number += 1
 
 elif execution_mode == "3":
     # Pour le site entier
