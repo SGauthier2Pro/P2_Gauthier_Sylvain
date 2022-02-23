@@ -8,12 +8,17 @@ import re
 import sys
 from pathlib import Path
 import csv
+import os
 from os import getcwd
 
-
+"""
 ############################################### section fonctions ######################################################
+"""
 
+"""
 ######## Fonction gerant les données de livre ########
+"""
+
 
 # Fonction de recuperation du titre du livre
 def get_book_title(page_content):
@@ -40,6 +45,7 @@ def get_image_url(page_content):
     image_short_url = image_tag["src"]
     image_url = image_short_url.replace("../..", "https://books.toscrape.com")
     return image_url
+
 
 # Fonction de recuperation du rating d'un livre
 def get_book_review_rating(page_content):
@@ -106,7 +112,10 @@ def get_data_book(url_link):
     return book_data_list
 
 
+"""
 ######## Fonction gérant les données de categorie ##########
+"""
+
 
 # Fonction de recuperation de la liste des liens de chaque categorie
 def get_category_link(category_name):
@@ -140,6 +149,7 @@ def get_categories_list():
             categories_list.append(string_category)
     return categories_list
 
+
 # Fonction de recuperation de la category d'une url donnée
 def get_category_from_url(url_link):
     page = requests.get(url_link)
@@ -150,7 +160,10 @@ def get_category_from_url(url_link):
     return category_to_return
 
 
+"""
 ####### Fonction de navigation #########
+"""
+
 
 # Fonction pour renvoyer le nombre de page d'index en integer
 def get_number_of_page(url_link):
@@ -198,10 +211,13 @@ def get_book_link_in_page(url_link):
     return page_book_link_list
 
 
+"""
 ######## Fonction de gestion du fichier de sortie ##########
+"""
 
-# Fonction retournant le fichier de resultat
-def get_result_filename(filename):
+
+# Fonction retournant le fichier de resultat incluant le dossier par type d'extraction
+def get_result_filename(filename, directory_type):
     if filename == "":
         choice_result_filename = input(
             "Entrer le nom du fichier de resultat sans extension (si laissé a vide le nom sera forcé a 'resultat') :")
@@ -209,11 +225,25 @@ def get_result_filename(filename):
         # Si nom de fichier vide force le nom 'resultat'
         if choice_result_filename == "":
             choice_result_filename = "resultat"
-    else :
+    else:
         choice_result_filename = filename
 
+    # Recuperation du repertoire courant
     current_directory = getcwd()
-    result_filename_defined = current_directory + "\\" + choice_result_filename + ".csv"
+
+    # Definition du repertoire de destination du fichier
+    my_directory = Path(current_directory + "\\" + directory_type)
+
+    # Si le repertoire de destination n'existe pas
+    if not my_directory.exists():
+        my_new_directory = Path(my_directory.name + "\\" + "Archive")
+        os.makedirs(my_new_directory)
+
+    # Si le fichier existe deja l'archiver dans le repertoire archive avec un timestamp inclu dans le nom
+    # a developper
+
+    # Defintion du path du fichier de resultat a retourner
+    result_filename_defined = my_directory.name + "\\" + choice_result_filename + ".csv"
     return result_filename_defined
 
 
@@ -221,8 +251,9 @@ def get_result_filename(filename):
 def fill_result_file(file_path, line_to_fill):
 
     # Declaration variable
-    myfile = Path(file_path)
+    my_file = Path(file_path)
 
+    # Declaration des l'en-tete des colonnes du fichier
     en_tete = ["product_page_url",
                "universal_ product_code",
                "title",
@@ -235,17 +266,22 @@ def fill_result_file(file_path, line_to_fill):
                "image_url"]
 
     # verifiation de l'existance du fichier si false je le crée et ajoute les en-tetes de colone
-
-    if not myfile.exists():
+    if not my_file.exists():
         with open(result_filename, 'w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(en_tete)
 
     # si le fichier resultat.csv existe j'ajoute la ligne d'information pour un livre
-    if myfile.exists():
+    if my_file.exists():
         with open(result_filename, 'a', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(line_to_fill)
+
+
+"""
+############################# Fonction gestion UI #######################
+"""
+
 
 # Fonction du menu d'execution
 def get_choice_menu_ui():
@@ -266,7 +302,12 @@ def get_choice_menu_ui():
     return str(execution_mode_code)
 
 
-# Fonction qui test la valeur de l'url et reponse
+# Fonction de nettoyage de la console
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
+# Fonction qui test la valeur de l'url et sa reponse
 def test_url(url):
     if "https://" in url or "http://" in url:
         reponse_get_request = requests.get(url)
@@ -285,17 +326,20 @@ def test_url(url):
 def test_category(category_to_test):
     category_to_return = ""
     categories_list = get_categories_list()
-    for category in categories_list:
-        if str(category) == category_to_test:
-            category_to_return = category
+    for category_name in categories_list:
+        if str(category_name) == category_to_test:
+            category_to_return = category_name
 
     return str(category_to_return)
 
 
+"""
 ######################################## Fin de la section Fonctions ###################################################
+"""
 
+"""
 ########################################## Section main du programme ###################################################
-
+"""
 
 # intialisation variable
 
@@ -305,10 +349,14 @@ url_entry = ""
 category_OK = ""
 result_filename = ""
 
-
+"""
 ##### Recuperation des argument passé au lancement du programme ######
+"""
 
+"""
 ##### Determine le type d'execution demandé ##########################
+"""
+
 
 # Mode d'execution livre
 if len(sys.argv) > 1 and str(sys.argv[1]) == "livre":
@@ -346,8 +394,10 @@ else:
     # Sans argument passage en mode ui menu
     execution_mode = get_choice_menu_ui()
 
+"""
+################################ Gestion du mode d'execution du programme ##############################################
+"""
 
-##################### Gestion du mode d'execution du programme ########################################################
 
 # execution pour un seul livre #########################################
 if execution_mode == "1":
@@ -361,7 +411,7 @@ if execution_mode == "1":
     line_to_write = get_data_book(url_OK)
 
     # declaration du fichier de resultat
-    result_filename = get_result_filename(line_to_write[2])
+    result_filename = get_result_filename(line_to_write[2], "livre")
 
     # Envoi des données dans le fichier de resultat
     fill_result_file(result_filename, line_to_write)
@@ -383,21 +433,34 @@ elif execution_mode == "2":
 
     # Recuperation d'url si url null et categorie null
     else:
+        # Nettoyage de la sonsole et affichage de la liste des category
+        cls()
         while url_OK == "":
-            print("Aucune url ou categorie correcte n'ont encore été saisi :")
+            print("Aucune url ou categorie correcte n'ont encore été saisies :")
             print(get_categories_list())
-            category_entry = input("Entre le nom de la categorie choisie dans la liste ci-dessus :")
+            category_entry = input("Entre le nom de la categorie choisie dans la liste ci-dessus (case sensitive) :")
             if test_category(category_entry) != "":
                 url_OK = test_url(get_category_link(category_entry))
                 category_OK = category_entry
             else:
-                print("la category entrée n'est pas une categorie du site !")
+                cls()
+                print(category_entry + " n'est pas une categorie du site !")
 
     # declaration du fichier de resultat
-    result_filename = get_result_filename(category_OK)
+    result_filename = get_result_filename(category_OK, "categorie")
 
     # Recuperation du nombre de page de la catégorie
     number_of_page = get_number_of_page(url_OK)
+
+    # Nettoyage de la console
+    cls()
+
+    # Affichage de debut d'execution sur la console
+    print("===================================================")
+    print("extraction de la catégorie  : " + category_OK)
+    print("url de la catégorie : " + url_OK)
+    print("nbr. de page de la categorie : " + str(number_of_page))
+    print("En cours d'extraction...")
 
     # Navigation dans les differentes pages de la categorie
     while page_number <= number_of_page:
@@ -410,26 +473,39 @@ elif execution_mode == "2":
             url_OK = get_next_page_link(url_OK)
         page_number += 1
 
+    # Affichage de la fin d'execution sur la console
+    print("Extraction terminée !")
+    print("Emplacement du fichier de resultat : " + result_filename)
+    print("===================================================")
+
+
 # Execution pour le site entier ###############################################
 elif execution_mode == "3":
+    # nettoyage de la console
+    cls()
 
     # Initialisation variable
     categories_name_list = get_categories_list()
 
     for category in categories_name_list:
+        # Test de l'url de la categorie
         url_OK = test_url(get_category_link(category))
+
+        # Affichage de debut d'execution sur la console
+        print("===================================================")
         print("extraction de la catégorie  : " + category)
-        print(url_OK)
+        print("url de la catégorie : " + url_OK)
+        print("En cours d'extraction...")
 
         # initialisation de la variable numero de page
         page_number = 1
 
         # declaration du fichier de resultat
-        result_filename = get_result_filename(category)
+        result_filename = get_result_filename(category, "complet")
 
         # Recuperation du nombre de page de la catégorie
         number_of_page = get_number_of_page(url_OK)
-        print(number_of_page)
+        print("nbr. de page de la categorie : " + str(number_of_page))
 
         # Navigation dans les differentes pages de la categorie
         while page_number <= number_of_page:
@@ -442,6 +518,10 @@ elif execution_mode == "3":
                 url_OK = get_next_page_link(url_OK)
             page_number += 1
 
+        # Affichage de la fin d'execution sur la console
+        print("Extraction terminée !")
+        print("Emplacement du fichier de resultat : " + result_filename)
+        print("===================================================")
 
 # Sortie du programme ##########################################################
 elif execution_mode == "4":
