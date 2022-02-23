@@ -243,7 +243,7 @@ def get_result_filename(filename, directory_type):
     # a developper
 
     # Defintion du path du fichier de resultat a retourner
-    result_filename_defined = my_directory.name + "\\" + choice_result_filename + ".csv"
+    result_filename_defined = current_directory + "\\" + directory_type + "\\" + choice_result_filename + ".csv"
     return result_filename_defined
 
 
@@ -407,6 +407,11 @@ if execution_mode == "1":
         url_entry = input("Entre l'url du livre a recuperer :")
         url_OK = test_url(url_entry)
 
+    # Affichage de debut d'execution sur la console
+    print("===================================================")
+    print("Extraction du livre sur l'url : " + url_OK)
+    print("Extraction en cours...")
+
     # Recuperation des donnée du livre
     line_to_write = get_data_book(url_OK)
 
@@ -415,6 +420,12 @@ if execution_mode == "1":
 
     # Envoi des données dans le fichier de resultat
     fill_result_file(result_filename, line_to_write)
+
+    # Affichage de la fin d'execution sur la console
+    print("Extraction terminée !")
+    print("Emplacement du fichier de resultat : " + result_filename)
+    print("===================================================")
+
 
 # Execution pour une categorie #######################################
 elif execution_mode == "2":
