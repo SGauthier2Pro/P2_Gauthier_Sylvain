@@ -1,7 +1,8 @@
 """
     import des modules necessaire
 """
-
+import time
+import urllib.request
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -10,6 +11,7 @@ from pathlib import Path
 import csv
 import os
 from os import getcwd
+import ntpath
 
 """
 ############################################### section fonctions ######################################################
@@ -20,26 +22,22 @@ from os import getcwd
 """
 
 
-# Fonction de recuperation du titre du livre
 def get_book_title(page_content):
     book_title = page_content.h1.string
     return book_title
 
 
-# Fonction de recuperation de la category du livre
 def get_book_category(page_content):
     book_category_line = page_content.find_all(href=re.compile("/category/books/"))
     return book_category_line[0].string
 
 
-# Fonction de recuperation de la description du livre
 def get_book_description(page_content):
     book_desription = page_content.find_all("meta", attrs={"name": "description"})
     description_to_clean = book_desription[0].get("content")
     return description_to_clean.strip()
 
 
-# Fonction de recuperation de l'url de l'image d'un livre
 def get_image_url(page_content):
     image_tag = page_content.find("img")
     image_short_url = image_tag["src"]
@@ -47,7 +45,6 @@ def get_image_url(page_content):
     return image_url
 
 
-# Fonction de recuperation du rating d'un livre
 def get_book_review_rating(page_content):
     rating_level_to_return = ""
     book_review_rating = page_content.find_all("p", class_=re.compile("star-rating"))
@@ -67,7 +64,6 @@ def get_book_review_rating(page_content):
     return rating_level_to_return
 
 
-# Fonction de recupération de l'upc d'un livre
 def get_book_page_table(page_content):
     book_table_datas = {}
     table = page_content.find_all("table", class_="table table-striped")
@@ -76,7 +72,6 @@ def get_book_page_table(page_content):
     return book_table_datas
 
 
-# Fonction de recuperation et transformation en integer du nombre de livre disponible
 def get_book_availability(page_content):
     availability_number = ""
     book_table_temp = get_book_page_table(page_content)
@@ -86,19 +81,15 @@ def get_book_availability(page_content):
     return availability_number
 
 
-# Fonction de recuperation des information sur un livre
 def get_data_book(url_link):
     page = requests.get(url_link)
     book_soup_content = BeautifulSoup(page.content, 'html.parser')
 
-    # Recuperation des donnée tableau de la page du livre
     book_table = get_book_page_table(book_soup_content)
 
-    # Traitement des prix afin de supprimé la devise
     price_without_tax = re.findall("\\d+\\.\\d+", book_table["Price (excl. tax)"])
     price_with_tax = re.findall("\\d+\\.\\d+", book_table["Price (incl. tax)"])
 
-    # Entrée des donnée du livre dans la liste a retourné
     book_data_list = [url_link,
                       book_table["UPC"],
                       get_book_title(book_soup_content),
@@ -109,15 +100,31 @@ def get_data_book(url_link):
                       get_book_category(book_soup_content),
                       get_book_review_rating(book_soup_content),
                       get_image_url(book_soup_content)]
+
+    download_book_picture(book_data_list[9], book_data_list[2])
+
     return book_data_list
 
+
+def download_book_picture(url_link, local_picture_name):
+    remote_picture_url = url_link
+    picture_filepath = Path(get_picture_filename(local_picture_name))
+
+    if not picture_filepath.exists():
+        print("telechargement de l'image du livre " + local_picture_name + " a l'adresse :" + remote_picture_url)
+        if requests.get(url_link).status_code == 200:
+            urllib.request.urlretrieve(remote_picture_url, get_picture_filename(local_picture_name))
+            print("Telechargement terminé avec succès !")
+        else:
+            print("Image du livre " + local_picture_name + " indisponible !")
+    else:
+        print("Image du livre déjà existante !")
 
 """
 ######## Fonction gérant les données de categorie ##########
 """
 
 
-# Fonction de recuperation de la liste des liens de chaque categorie
 def get_category_link(category_name):
     page = requests.get("https://books.toscrape.com/catalogue/category/books_1/index.html")
     category_soup_content = BeautifulSoup(page.content, 'html.parser')
@@ -133,7 +140,6 @@ def get_category_link(category_name):
     return category_link
 
 
-# Fonction de recuperation de la liste des noms de chaque categorie
 def get_categories_list():
     page = requests.get("https://books.toscrape.com/catalogue/category/books_1/index.html")
     categories_soup_content = BeautifulSoup(page.content, 'html.parser')
@@ -150,7 +156,6 @@ def get_categories_list():
     return categories_list
 
 
-# Fonction de recuperation de la category d'une url donnée
 def get_category_from_url(url_link):
     page = requests.get(url_link)
     soup_category_page = BeautifulSoup(page.content, 'html.parser')
@@ -165,39 +170,42 @@ def get_category_from_url(url_link):
 """
 
 
-# Fonction pour renvoyer le nombre de page d'index en integer
 def get_number_of_page(url_link):
+
     page = requests.get(url_link)
     soup = BeautifulSoup(page.content, 'html.parser')
+
     pager_ul = soup.find_all("ul", class_="pager")
+
     if len(pager_ul) != 0:
         pager_lis = pager_ul[0].find_all("li", class_="current")
         string_pager = pager_lis[0].string
-        entire_number_of_page = re.sub("\\n|\\s", "", string_pager)
-        entire_number_of_page = re.sub("Page1of", "", entire_number_of_page)
+        entire_number_of_page = re.sub("Page1of", "", re.sub("\\n|\\s", "", string_pager))
     else:
         entire_number_of_page = 1
 
     return int(entire_number_of_page)
 
 
-# Fonction renvoyant la prochaine page du pager
 def get_next_page_link(url_link):
+
     page = requests.get(url_link)
     soup = BeautifulSoup(page.content, 'html.parser')
+
     pager_ul = soup.find_all("ul", class_="pager")
     pager_lis = pager_ul[0].find_all("li", class_="next")
     href_next_page = pager_lis[0].a["href"]
+
     current_page_name = url_link.split("/")[-1]
     current_url_root_directory = re.sub(current_page_name, "", url_link)
+
     link_next_page = current_url_root_directory + href_next_page
+
     return link_next_page
 
 
-# Fonction renvoyant la liste des url de livre d'un page categorie
 def get_book_link_in_page(url_link):
 
-    # declaration de la liste a retourner
     page_book_link_list = []
 
     page = requests.get(url_link)
@@ -212,48 +220,74 @@ def get_book_link_in_page(url_link):
 
 
 """
-######## Fonction de gestion du fichier de sortie ##########
+######## Fonction de gestion des fichiers de sortie et des repertoires ##########
 """
 
 
-# Fonction retournant le fichier de resultat incluant le dossier par type d'extraction
-def get_result_filename(filename, directory_type):
-    if filename == "":
-        choice_result_filename = input(
-            "Entrer le nom du fichier de resultat sans extension (si laissé a vide le nom sera forcé a 'resultat') :")
-
-        # Si nom de fichier vide force le nom 'resultat'
-        if choice_result_filename == "":
-            choice_result_filename = "resultat"
-    else:
-        choice_result_filename = filename
-
-    # Recuperation du repertoire courant
+def create_directory_structure():
     current_directory = getcwd()
 
-    # Definition du repertoire de destination du fichier
+    directories_list = [current_directory + "\\livre\\old",
+                        current_directory + "\\categorie\\old",
+                        current_directory + "\\complet\\old",
+                        current_directory + "\\images\\old"]
+    for directory in directories_list:
+        directory_to_create = Path(directory)
+        if not directory_to_create.exists():
+            print("Creation du repertoire : " + str(directory_to_create.resolve()))
+            os.makedirs(directory_to_create)
+
+
+def archive_if_exists(my_directory, my_filename, my_file_type):
+    filepath_to_test = Path(my_directory + "\\" + my_filename + my_file_type)
+
+    if filepath_to_test.exists():
+
+        file_last_modification = time.strptime(time.ctime(os.stat(filepath_to_test.resolve()).st_mtime),
+                                               "%a %b %d %H:%M:%S %Y")
+        last_modification_string = time.strftime("_%Y%m%d_%H%M%S", file_last_modification)
+
+        my_source = str(filepath_to_test.resolve())
+        my_destination = str(my_directory + "\\old\\" + my_filename + last_modification_string + my_file_type)
+
+        Path(my_source).rename(my_destination)
+
+
+def get_picture_filename(filename):
+    file_type = ".jpg"
+
+    filename = re.sub(",", "", re.sub(" ", "_", re.sub(":", "_", filename)))
+    choice_picture_filename = filename + file_type
+
+    current_directory = getcwd()
+    my_directory = Path(current_directory + "\\images")
+
+    picture_filename_defined = str(my_directory.resolve()) + "\\" + choice_picture_filename
+
+    archive_if_exists(str(my_directory), str(filename), str(file_type))
+
+    return picture_filename_defined
+
+
+def get_result_filename(filename, directory_type):
+    file_type = ".csv"
+
+    filename = re.sub(",", "", re.sub(" ", "_", re.sub(":", "_", filename)))
+    choice_result_filename = filename + file_type
+
+    current_directory = getcwd()
     my_directory = Path(current_directory + "\\" + directory_type)
 
-    # Si le repertoire de destination n'existe pas
-    if not my_directory.exists():
-        my_new_directory = Path(my_directory.name + "\\" + "Archive")
-        os.makedirs(my_new_directory)
+    result_filename_defined = str(my_directory.resolve()) + "\\" + choice_result_filename
 
-    # Si le fichier existe deja l'archiver dans le repertoire archive avec un timestamp inclu dans le nom
-    # a developper
+    archive_if_exists(str(my_directory), str(filename), str(file_type))
 
-    # Defintion du path du fichier de resultat a retourner
-    result_filename_defined = current_directory + "\\" + directory_type + "\\" + choice_result_filename + ".csv"
     return result_filename_defined
 
 
-# Fonction pour creer le fichier de sortie si il n'existe pas et rajouter un ligne
 def fill_result_file(file_path, line_to_fill):
-
-    # Declaration variable
     my_file = Path(file_path)
 
-    # Declaration des l'en-tete des colonnes du fichier
     en_tete = ["product_page_url",
                "universal_ product_code",
                "title",
@@ -265,14 +299,12 @@ def fill_result_file(file_path, line_to_fill):
                "review_rating",
                "image_url"]
 
-    # verifiation de l'existance du fichier si false je le crée et ajoute les en-tetes de colone
     if not my_file.exists():
         with open(result_filename, 'w', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(en_tete)
-
-    # si le fichier resultat.csv existe j'ajoute la ligne d'information pour un livre
-    if my_file.exists():
+            writer.writerow(line_to_fill)
+    else:
         with open(result_filename, 'a', newline='', encoding='utf-8') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(line_to_fill)
@@ -309,12 +341,12 @@ def cls():
 
 # Fonction qui test la valeur de l'url et sa reponse
 def test_url(url):
-    if "https://" in url or "http://" in url:
-        reponse_get_request = requests.get(url)
-        if reponse_get_request.status_code == 200:
+    if ("https://" in url or "http://" in url) and ".html" in url:
+        response_get_request = requests.get(url)
+        if response_get_request.status_code == 200:
             url_to_test = url
         else:
-            print("erreur sur l'url : " + str(reponse_get_request))
+            print("erreur sur l'url : " + str(response_get_request))
             url_to_test = ""
     else:
         url_to_test = ""
@@ -349,6 +381,10 @@ url_entry = ""
 category_OK = ""
 result_filename = ""
 
+# Creation des repertoires
+create_directory_structure()
+
+
 """
 ##### Recuperation des argument passé au lancement du programme ######
 """
@@ -360,10 +396,13 @@ result_filename = ""
 
 # Mode d'execution livre
 if len(sys.argv) > 1 and str(sys.argv[1]) == "livre":
+    cls()
 
     # initialisation de la variable url a consulter : laisse a blanc si non valide
     if len(sys.argv) == 3:
         url_OK = test_url(sys.argv[2])
+        if url_OK == "":
+            print("L'url entré est invalide !")
     else:
         url_OK = ""
 
@@ -374,9 +413,13 @@ elif len(sys.argv) > 1 and str(sys.argv[1]) == "categorie":
 
     # Intialise la variable url ou categorie le cas echeant : laisse a blanc si non reconnu
     if len(sys.argv) == 3:
-        url_OK = test_url(sys.argv[2])
-        if url_OK == "":
+        if "https://books.toscrape.com/catalogue/category" in sys.argv[2]:
+            url_OK = test_url(sys.argv[2])
+            category_OK = ""
+        else:
             category_OK = test_category(sys.argv[2])
+            url_OK = ""
+
     else:
         url_OK = ""
         category_OK = ""
