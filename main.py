@@ -11,7 +11,6 @@ from pathlib import Path
 import csv
 import os
 from os import getcwd
-import ntpath
 
 """
 ############################################### section fonctions ######################################################
