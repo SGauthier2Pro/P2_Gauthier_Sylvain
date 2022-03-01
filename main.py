@@ -73,13 +73,22 @@ def get_book_page_table(page_content):
     return book_table_datas
 
 
-def get_book_availability(page_content):
+def get_book_availability(availability_string):
     availability_number = ""
-    book_table_temp = get_book_page_table(page_content)
-    extracted_availability_number = [int(s) for s in re.findall(r'\d', book_table_temp["Availability"])]
+    extracted_availability_number = [int(s) for s in re.findall(r'\d', availability_string)]
     for number in extracted_availability_number:
         availability_number += str(number)
     return availability_number
+
+
+def get_price_without_tax(price_without_tax_string):
+    price_without_tax = re.findall("\\d+\\.\\d+", price_without_tax_string)
+    return price_without_tax[0]
+
+
+def get_price_with_tax(price_with_tax_string):
+    price_with_tax = re.findall("\\d+\\.\\d+", price_with_tax_string)
+    return price_with_tax[0]
 
 
 def get_data_book(url_link):
@@ -88,15 +97,12 @@ def get_data_book(url_link):
 
     book_table = get_book_page_table(book_soup_content)
 
-    price_without_tax = re.findall("\\d+\\.\\d+", book_table["Price (excl. tax)"])
-    price_with_tax = re.findall("\\d+\\.\\d+", book_table["Price (incl. tax)"])
-
     book_data_list = [url_link,
                       book_table["UPC"],
                       get_book_title(book_soup_content),
-                      price_with_tax[0],
-                      price_without_tax[0],
-                      get_book_availability(book_soup_content),
+                      get_price_with_tax(book_table["Price (incl. tax)"]),
+                      get_price_without_tax(book_table["Price (excl. tax)"]),
+                      get_book_availability(book_table["Availability"]),
                       get_book_description(book_soup_content),
                       get_book_category(book_soup_content),
                       get_book_review_rating(book_soup_content),
