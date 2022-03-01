@@ -33,9 +33,11 @@ def get_book_category(page_content):
 
 
 def get_book_description(page_content):
-    book_desription = page_content.find_all("meta", attrs={"name": "description"})
-    description_to_clean = book_desription[0].get("content")
-    return description_to_clean.strip()
+    book_description = page_content.find_all("meta", attrs={"name": "description"})
+    description_to_clean = book_description[0].get("content")
+    description_to_clean = description_to_clean.strip()
+    description_to_return = description_to_clean[376:len(description_to_clean)]
+    return description_to_return
 
 
 def get_image_url(page_content):
