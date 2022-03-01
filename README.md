@@ -139,7 +139,7 @@ You have now to clone the distant repository on your computer.
  ```
  6. verify that all packages are installed typing "pip freeze" command. You should get this result :
  
- ![pip_freeze_result](https://user-images.githubusercontent.com/99419487/156131214-9e37561e-6aad-4b32-8f21-ef6c218a7fa5.png)
+ ![pip_freeze_result](https://user-images.githubusercontent.com/99419487/156190613-91b40e70-c897-4967-91a7-97a4c5e4771e.png)
  
  7. now your environement is ready to execute the program.
 
@@ -179,7 +179,9 @@ python main.py categorie Travel
 
 If the name of category is not correct the list of all available categories is displaying in the console :
 
-![categories_list](https://user-images.githubusercontent.com/99419487/156140733-cb4f0f58-332e-460d-b16e-157c2a6c3306.png)
+![categories_list](https://user-images.githubusercontent.com/99419487/156188140-ac41c573-9dd5-4dfa-9edc-0418c8b98412.png)
+
+You just have to enter the right category(case sensitive) and press enter to strat the extraction.
 
 you should see the result displaying in command prompt :
 
@@ -197,6 +199,15 @@ python main.py complet
 ``` 
 
 2. You can consult the result file in the "Complet" directory (the exact path is in the reult displaying in console)
+
+***
+### To get choice menu
+***
+Even if you start directly the main program without argument, the main menu appears, asking you to choose which kind of exrtaction you want :
+
+![main_menu](https://user-images.githubusercontent.com/99419487/156189949-33e32d8a-5b66-4569-b8b4-344e663e441c.png)
+
+you just have to type the 1, 2, 3 or 4 answer and press enter to execute the choice. 
 
 ***
 ## FAQs
