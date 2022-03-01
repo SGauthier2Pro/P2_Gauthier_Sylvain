@@ -1,5 +1,9 @@
 # Scraping_Book_To_Scrap 
 ***
+Design by Books Online
+
+![Books_Online_Logo](https://user-images.githubusercontent.com/99419487/156156076-b58e32ee-a296-46e4-820b-f03ee16a8d52.png)
+
 As part of my mission at Books Online I was asked to develop a script to get all books data sold on the [Book to Scrap](http://books.toscrape.com/)  web site (included cover pictures) and inject result in csv files
 ***
 ***
