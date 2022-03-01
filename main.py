@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 import csv
 import os
-from os import getcwd
 
 """
 ############################################### section fonctions ######################################################
@@ -127,6 +126,7 @@ def download_book_picture(url_link, local_picture_name):
     else:
         print("Image du livre déjà existante !")
 
+
 """
 ######## Fonction gérant les données de categorie ##########
 """
@@ -232,7 +232,7 @@ def get_book_link_in_page(url_link):
 
 
 def create_directory_structure():
-    current_directory = getcwd()
+    current_directory = os.getcwd()
 
     directories_list = [current_directory + "\\livre\\old",
                         current_directory + "\\categorie\\old",
@@ -266,7 +266,7 @@ def get_picture_filename(filename):
     filename = re.sub(",", "", re.sub(" ", "_", re.sub(":", "_", filename)))
     choice_picture_filename = filename + file_type
 
-    current_directory = getcwd()
+    current_directory = os.getcwd()
     my_directory = Path(current_directory + "\\images")
 
     picture_filename_defined = str(my_directory.resolve()) + "\\" + choice_picture_filename
@@ -282,7 +282,7 @@ def get_result_filename(filename, directory_type):
     filename = re.sub(",", "", re.sub(" ", "_", re.sub(":", "_", filename)))
     choice_result_filename = filename + file_type
 
-    current_directory = getcwd()
+    current_directory = os.getcwd()
     my_directory = Path(current_directory + "\\" + directory_type)
 
     result_filename_defined = str(my_directory.resolve()) + "\\" + choice_result_filename
