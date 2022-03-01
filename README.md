@@ -1,6 +1,6 @@
 # Scraping_Book_To_Scrap 
 ***
-This program aims to get all books data sold on the [Book to Scrap](http://books.toscrape.com/)  web site and inject result in csv files
+As part of my mission at Books Online I was asked to develop a script to get all books data sold on the [Book to Scrap](http://books.toscrape.com/)  web site (included cover pictures) and inject result in csv files
 ***
 ***
 ## Table of Contents
