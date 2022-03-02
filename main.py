@@ -378,14 +378,12 @@ create_directory_structure()
 
 """
 ##### Recuperation des argument passé au lancement du programme ######
-"""
-
-"""
 ##### Determine le type d'execution demandé ##########################
 """
 
 
 if len(sys.argv) > 1 and str(sys.argv[1]) == "livre":
+
     cls()
 
     if len(sys.argv) == 3:
