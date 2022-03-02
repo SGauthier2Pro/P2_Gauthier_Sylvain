@@ -94,6 +94,9 @@ def get_data_book(url_link):
     page = requests.get(url_link)
     book_soup_content = BeautifulSoup(page.content, 'html.parser')
 
+    print("Extraction des données du livre : " + get_book_title(book_soup_content))
+    print("url du livre : " + url_link)
+
     book_table = get_book_page_table(book_soup_content)
 
     book_data_list = [url_link,
@@ -170,6 +173,35 @@ def get_category_from_url(url_link):
     li_active = ul_breadcrumb[0].find_all("li", class_="active")
     category_to_return = li_active[0].string
     return category_to_return
+
+
+def get_all_books_in_category(url_link, category_name, result_filepath):
+
+    page_number = 1
+
+    number_of_page = get_number_of_page(url_link)
+
+    print("===================================================")
+    print("extraction de la catégorie  : " + category_name)
+    print("url de la catégorie : " + url_link)
+    print("nbr. de page de la categorie : " + str(number_of_page))
+    print("En cours d'extraction...")
+
+    while page_number <= number_of_page:
+
+        list_link_in_category = get_book_link_in_page(url_link)
+        for link in list_link_in_category:
+            book_line_to_write = get_data_book(link)
+            fill_result_file(result_filepath, book_line_to_write)
+
+        if page_number < number_of_page:
+            url_link = get_next_page_link(url_link)
+
+        page_number += 1
+
+    print("Extraction terminée !")
+    print("Emplacement du fichier de resultat : " + result_filepath)
+    print("===================================================")
 
 
 """
@@ -431,8 +463,6 @@ if execution_mode == "1":
         url_OK = test_url(url_entry)
 
     print("===================================================")
-    print("Extraction du livre sur l'url : " + url_OK)
-    print("Extraction en cours...")
 
     line_to_write = get_data_book(url_OK)
 
@@ -445,9 +475,6 @@ if execution_mode == "1":
     print("===================================================")
 
 elif execution_mode == "2":
-
-    list_link_in_category = []
-    page_number = 1
 
     if url_OK != "" and category_OK == "":
         category_OK = get_category_from_url(url_OK)
@@ -474,33 +501,11 @@ elif execution_mode == "2":
                 cls()
                 print(category_entry + " n'est pas une categorie du site !")
 
-    result_filename = get_result_filename(category_OK)
-
-    number_of_page = get_number_of_page(url_OK)
-
     cls()
 
-    print("===================================================")
-    print("extraction de la catégorie  : " + category_OK)
-    print("url de la catégorie : " + url_OK)
-    print("nbr. de page de la categorie : " + str(number_of_page))
-    print("En cours d'extraction...")
+    result_filename = get_result_filename(category_OK)
 
-    while page_number <= number_of_page:
-
-        list_link_in_category = get_book_link_in_page(url_OK)
-        for link in list_link_in_category:
-            line_to_write = get_data_book(link)
-            fill_result_file(result_filename, line_to_write)
-
-        if page_number < number_of_page:
-            url_OK = get_next_page_link(url_OK)
-
-        page_number += 1
-
-    print("Extraction terminée !")
-    print("Emplacement du fichier de resultat : " + result_filename)
-    print("===================================================")
+    get_all_books_in_category(url_OK, category_OK, result_filename)
 
 elif execution_mode == "3":
 
@@ -510,33 +515,11 @@ elif execution_mode == "3":
 
     for category in categories_name_list:
 
-        url_OK = test_url(get_category_link(category))
-
-        print("===================================================")
-        print("extraction de la catégorie  : " + category)
-        print("url de la catégorie : " + url_OK)
-        print("En cours d'extraction...")
-
-        page_number = 1
-
         result_filename = get_result_filename(category)
 
-        number_of_page = get_number_of_page(url_OK)
-        print("nbr. de page de la categorie : " + str(number_of_page))
+        url_OK = test_url(get_category_link(category))
 
-        while page_number <= number_of_page:
-
-            list_link_in_category = get_book_link_in_page(url_OK)
-            for link in list_link_in_category:
-                line_to_write = get_data_book(link)
-                fill_result_file(result_filename, line_to_write)
-            if page_number < number_of_page:
-                url_OK = get_next_page_link(url_OK)
-            page_number += 1
-
-        print("Extraction terminée !")
-        print("Emplacement du fichier de resultat : " + result_filename)
-        print("===================================================")
+        get_all_books_in_category(url_OK, category, result_filename)
 
 elif execution_mode == "4":
     sys.exit()
