@@ -165,7 +165,7 @@ you should see the result displaying in command prompt :
 
 ![one_book_result](https://user-images.githubusercontent.com/99419487/156139614-3739ec59-461d-4d0c-8094-5c9dad30b4ad.png)
 
-3. You can consult the result file in the "Livre" directory (the exact path is in the reult displaying in console)
+3. You can consult the result file in the "Livre" directory (the exact path is in the result displaying in console)
 
 ***
 ### To get a specific category
@@ -187,7 +187,7 @@ you should see the result displaying in command prompt :
 
 ![category_result](https://user-images.githubusercontent.com/99419487/156141310-924a6693-43be-4e12-af97-8a98135990f4.png)
 
-3. You can consult the result file in the "Categorie" directory (the exact path is in the reult displaying in console)
+3. You can consult the result file in the "Categorie" directory (the exact path is in the result displaying in console)
 
 ***
 ### To get the entire web site
@@ -198,7 +198,7 @@ you should see the result displaying in command prompt :
 python main.py complet
 ``` 
 
-2. You can consult the result file in the "Complet" directory (the exact path is in the reult displaying in console)
+2. You can consult the result file in the "Complet" directory (the exact path is in the result displaying in console)
 
 ***
 ### To get choice menu
