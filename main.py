@@ -117,6 +117,8 @@ def get_book_description(page_content):
     description_to_clean = book_description[0].get("content")
     description_to_clean = description_to_clean.strip()
     description_to_return = description_to_clean[375:len(description_to_clean)]
+    description_to_return_in_byte = str(description_to_return).encode('ascii', 'ignore')
+    description_to_return = description_to_return_in_byte.decode('utf8', 'ignore')
     if len(description_to_return) == 0:
         description_to_return = description_to_clean
     return str(description_to_return)
