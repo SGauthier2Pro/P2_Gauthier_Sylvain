@@ -16,6 +16,88 @@ import os
 """
 
 """
+######## Fonction de gestion des fichiers de sortie et des repertoires ##########
+"""
+
+
+def create_directory_structure():
+    current_directory = os.getcwd()
+
+    directories_list = [current_directory + "\\livre\\old",
+                        current_directory + "\\categorie\\old",
+                        current_directory + "\\images\\old"]
+    for directory in directories_list:
+        directory_to_create = Path(directory)
+        if not directory_to_create.exists():
+            print("Creation du repertoire : " + str(directory_to_create.resolve()))
+            os.makedirs(directory_to_create)
+
+
+def archive_if_exists(my_directory, my_filename, my_file_type):
+    filepath_to_test = Path(my_directory + "\\" + my_filename + my_file_type)
+
+    if filepath_to_test.exists():
+
+        file_last_modification = time.strptime(time.ctime(os.stat(filepath_to_test.resolve()).st_mtime),
+                                               "%a %b %d %H:%M:%S %Y")
+        last_modification_string = time.strftime("_%Y%m%d_%H%M%S", file_last_modification)
+
+        my_source = str(filepath_to_test.resolve())
+        my_destination = str(my_directory + "\\old\\" + my_filename + last_modification_string + my_file_type)
+
+        Path(my_source).rename(my_destination)
+
+
+def get_result_filename(filename, *args):
+    file_type = ".csv"
+    directory_type = "categorie"
+
+    for argument in args:
+        if argument == "livre":
+            directory_type = "livre"
+        elif argument == "image":
+            directory_type = "images"
+            file_type = ".jpg"
+
+    filename = re.sub("[,\"*?]", "", re.sub("[ \\/:]", "_", filename))
+    choice_result_filename = filename + file_type
+
+    current_directory = os.getcwd()
+    my_directory = Path(current_directory + "\\" + directory_type)
+
+    result_filename_defined = str(my_directory.resolve()) + "\\" + choice_result_filename
+
+    archive_if_exists(str(my_directory), str(filename), str(file_type))
+
+    return result_filename_defined
+
+
+def fill_result_file(file_path, line_to_fill):
+    my_file = Path(file_path)
+
+    en_tete = ["product_page_url",
+               "universal_ product_code",
+               "title",
+               "price_including_tax",
+               "price_excluding_tax",
+               "number_available",
+               "product_description",
+               "category",
+               "review_rating",
+               "image_url"]
+
+    if not my_file.exists():
+        with open(result_filename, 'w', newline='', encoding='utf-8') as csv_file:
+            writer = csv.writer(csv_file, delimiter=';')
+            writer.writerow(en_tete)
+            writer.writerow(line_to_fill)
+    else:
+        with open(result_filename, 'a', newline='', encoding='utf-8') as csv_file:
+            writer = csv.writer(csv_file, delimiter=';')
+            writer.writerow(line_to_fill)
+
+
+"""
 ######## Fonction gerant les données de livre ########
 """
 
@@ -35,6 +117,8 @@ def get_book_description(page_content):
     description_to_clean = book_description[0].get("content")
     description_to_clean = description_to_clean.strip()
     description_to_return = description_to_clean[375:len(description_to_clean)]
+    if len(description_to_return) == 0:
+        description_to_return = description_to_clean
     return str(description_to_return)
 
 
@@ -175,6 +259,16 @@ def get_category_from_url(url_link):
     return category_to_return
 
 
+def test_category(category_to_test):
+    category_to_return = ""
+    categories_list = get_categories_list()
+    for category_name in categories_list:
+        if str(category_name) == category_to_test:
+            category_to_return = category_name
+
+    return str(category_to_return)
+
+
 def get_all_books_in_category(url_link, category_name, result_filepath):
 
     page_number = 1
@@ -259,89 +353,7 @@ def get_book_link_in_page(url_link):
 
 
 """
-######## Fonction de gestion des fichiers de sortie et des repertoires ##########
-"""
-
-
-def create_directory_structure():
-    current_directory = os.getcwd()
-
-    directories_list = [current_directory + "\\livre\\old",
-                        current_directory + "\\categorie\\old",
-                        current_directory + "\\images\\old"]
-    for directory in directories_list:
-        directory_to_create = Path(directory)
-        if not directory_to_create.exists():
-            print("Creation du repertoire : " + str(directory_to_create.resolve()))
-            os.makedirs(directory_to_create)
-
-
-def archive_if_exists(my_directory, my_filename, my_file_type):
-    filepath_to_test = Path(my_directory + "\\" + my_filename + my_file_type)
-
-    if filepath_to_test.exists():
-
-        file_last_modification = time.strptime(time.ctime(os.stat(filepath_to_test.resolve()).st_mtime),
-                                               "%a %b %d %H:%M:%S %Y")
-        last_modification_string = time.strftime("_%Y%m%d_%H%M%S", file_last_modification)
-
-        my_source = str(filepath_to_test.resolve())
-        my_destination = str(my_directory + "\\old\\" + my_filename + last_modification_string + my_file_type)
-
-        Path(my_source).rename(my_destination)
-
-
-def get_result_filename(filename, *args):
-    file_type = ".csv"
-    directory_type = "categorie"
-
-    for argument in args:
-        if argument == "livre":
-            directory_type = "livre"
-        elif argument == "image":
-            directory_type = "images"
-            file_type = ".jpg"
-
-    filename = re.sub("[,\"*?]", "", re.sub("[ \\/:]", "_", filename))
-    choice_result_filename = filename + file_type
-
-    current_directory = os.getcwd()
-    my_directory = Path(current_directory + "\\" + directory_type)
-
-    result_filename_defined = str(my_directory.resolve()) + "\\" + choice_result_filename
-
-    archive_if_exists(str(my_directory), str(filename), str(file_type))
-
-    return result_filename_defined
-
-
-def fill_result_file(file_path, line_to_fill):
-    my_file = Path(file_path)
-
-    en_tete = ["product_page_url",
-               "universal_ product_code",
-               "title",
-               "price_including_tax",
-               "price_excluding_tax",
-               "number_available",
-               "product_description",
-               "category",
-               "review_rating",
-               "image_url"]
-
-    if not my_file.exists():
-        with open(result_filename, 'w', newline='', encoding='utf-8') as csv_file:
-            writer = csv.writer(csv_file, delimiter=';')
-            writer.writerow(en_tete)
-            writer.writerow(line_to_fill)
-    else:
-        with open(result_filename, 'a', newline='', encoding='utf-8') as csv_file:
-            writer = csv.writer(csv_file, delimiter=';')
-            writer.writerow(line_to_fill)
-
-
-"""
-############################# Fonction gestion UI #######################
+############################# Fonction generale et gestion UI #######################
 """
 
 
@@ -378,16 +390,6 @@ def test_url(url):
         url_to_test = ""
 
     return url_to_test
-
-
-def test_category(category_to_test):
-    category_to_return = ""
-    categories_list = get_categories_list()
-    for category_name in categories_list:
-        if str(category_name) == category_to_test:
-            category_to_return = category_name
-
-    return str(category_to_return)
 
 
 """
